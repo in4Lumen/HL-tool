@@ -1,0 +1,87 @@
+/* HL Recovery Terminal — appearance.
+   Palette lives in :root; theme change = edit this block only. */
+:root {
+  --bg: #0f1420;         /* page background */
+  --panel: #161d2e;      /* card background */
+  --border: #2a3550;     /* borders */
+  --text: #e8ecf5;       /* main text */
+  --muted: #93a3bb;      /* secondary text */
+  --accent: #1fc0a8;     /* buttons */
+  --accent-hi: #45d6c0;  /* buttons hover */
+  --btn-text: #04211b;   /* dark text on turquoise */
+  --ok: #7ee2a8;         /* success */
+  --err: #ff8f8f;        /* error */
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px; line-height: 1.5;
+  background: var(--bg); color: var(--text);
+  max-width: 680px; margin: 32px auto; padding: 0 16px;
+}
+
+h1 { font-size: 24px; margin: 0 0 16px; }
+
+/* Logical blocks: cards */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 0 16px;
+}
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+label { display: block; margin: 12px 0 4px; font-size: 13px; color: var(--muted); }
+
+input, select {
+  width: 100%; box-sizing: border-box; padding: 10px;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); font-size: 14px;
+}
+
+input:focus, select:focus, button:focus { outline: 2px solid var(--accent-hi); }
+
+button {
+  width: 100%; box-sizing: border-box; margin: 8px 0 0; padding: 11px;
+  border-radius: 8px; border: 1px solid var(--accent-hi);
+  background: var(--accent); color: var(--btn-text);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+button:hover { background: var(--accent-hi); }
+button:active { transform: translateY(1px); }
+
+.status { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.ok  { color: var(--ok); }
+.err { color: var(--err); }
+
+#log {
+  margin: 0; padding: 10px;
+  border-radius: 8px; border: 1px solid var(--border); background: #0a0e18;
+  font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+  white-space: pre-wrap; min-height: 120px; max-height: 300px; overflow-y: auto;
+}
+
+button:disabled {
+  background: #2e3742; color: #93a0ad;
+  border-color: #46505c; opacity: 1; cursor: not-allowed;
+}
+button:disabled:hover { background: #2e3742; }
+.warn { color: #ffd27a; }
+
+/* Обёртка для поля суммы с кнопкой MAX внутри */
+.amt-wrap { position: relative; }
+.amt-wrap input { padding-right: 64px; }
+button.max {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: auto; margin: 0; padding: 4px 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; border-radius: 6px;
+}
+button.max:active { transform: translateY(-50%); }
+.hint { margin: 8px 0 0; font-size: 12px; color: var(--muted); }

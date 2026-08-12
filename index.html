@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HL Recovery Terminal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>HL Recovery Terminal <span id="appVer"></span></h1>
+
+  <!-- Section: Settings (collapsible) -->
+  <section class="card">
+    <details>
+      <summary>⚙️ Advanced Settings</summary>
+      <label for="gateway">API Gateway URL</label>
+      <input id="gateway" type="text" value="https://api.hyperliquid.xyz">
+
+      <label for="vaultAddr">HLP Vault Address</label>
+      <input id="vaultAddr" type="text" value="0xdfc24b077bc1425ad1dea75bcb6f8158e10df303">
+    </details>
+  </section>
+
+  <!-- Section: Wallet -->
+  <section class="card">
+    <h2>Wallet</h2>
+    <button id="connect">🔌 Connect Wallet</button>
+    <p id="who" class="status">Not connected</p>
+  </section>
+
+  <!-- Section: Balances -->
+  <section class="card">
+    <h2>Balances</h2>
+    <label for="checkAddr">Balance Check Address</label>
+    <input id="checkAddr" type="text" placeholder="0x… after connect — your address (editable)">
+
+    <button id="balance">🔍 Check Balance</button>
+
+    <p id="vaultBal" class="status">Vault (HLP): —</p>
+    <p id="lockStatus" class="status">—</p>
+    <p id="accBal" class="status">Available Balance: —</p>
+    
+  </section>
+
+  <!-- Section: Withdraw from HLP -->
+  <section class="card">
+    <h2>Withdraw from HLP Vault</h2>
+    <p id="agentStatus" class="status">Agent: ✗ not approved (auto-created on first vault op)</p>
+
+    <label for="hlpAmt">Amount (USDC)</label>
+    <div class="amt-wrap">
+      <input id="hlpAmt" type="number" min="0" step="0.01" placeholder="0.00">
+      <button id="maxHlp" class="max" type="button">MAX</button>
+    </div>
+    <button id="outHlp">Withdraw from HLP</button>
+
+    <!-- [TEMP] тестовый блок: удалить перед релизом -->
+    <div style="border:1px dashed #777; border-radius:6px; padding:8px; margin-top:8px;">
+      <button id="inHlp" class="action" disabled>Deposit to HLP (test)</button>
+    </div>
+  </section>
+
+  <!-- Section: Bridge to Arbitrum -->
+  <section class="card">
+    <h2>Withdraw from Hyperliquid</h2>
+    <label for="arbDest">Destination Address (Arbitrum)</label>
+    <input id="arbDest" type="text" placeholder="0x… after connect — your address (editable)">
+
+    <label for="arbAmt">Amount (USDC)</label>
+    <div class="amt-wrap">
+      <input id="arbAmt" type="number" min="0" step="0.01" placeholder="0.00">
+      <button id="maxArb" class="max" type="button">MAX</button>
+    </div>
+    <p class="hint">⚠️ Withdraw fee: 0.2 USDC — deducted from the withdrawn amount.</p>
+    <button id="outArb">Bridge to Arbitrum</button>
+  </section>
+
+  <!-- Section: Log -->
+  <section class="card">
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </section>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
