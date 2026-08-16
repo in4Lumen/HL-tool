@@ -6,6 +6,7 @@ import { connectWallet, onAccountsChanged } from "./wallet.js";
 const $ = (id) => document.getElementById(id);
 const DEDUCT_FEE_USD = 0.2; // фикс-комиссия вывода, сервер вычитает из суммы
 const GAS_BUFFER_USD = 0.01; // консервативный буфер под EVM-gas (официальный ~0.0011)
+const DUST_USD = 0.01; // пыль: всё, что меньше цента, считаем нулём (как официальный фронт)
 const AGENT_KEY_LS = "hl_agent_key"; // localStorage-ключ агента
 const VERSION = "1.0.0"; // версия инструмента — менять здесь при каждом релизе
 let last = { acc: null, vault: null, spot: null, fee: null }; // последние полученные данные
@@ -37,6 +38,13 @@ function refreshAgentStatus() {
   }
   el.textContent = "Agent: ✓ " + agentAccountFromKey(key).address.slice(0, 10) + "…";
   el.className = "status ok";
+}
+// Общая: через N секунд после успеха имитирует клик по Check Balance,
+// чтобы пользователь увидел свежие балансы без ручного действия.
+async function autoRefreshAfterSuccess(delayMs) {
+  log("→ балансы обновятся через " + (delayMs / 1000) + " сек…");
+  await new Promise(r => setTimeout(r, delayMs));
+  $("balance").click();
 }
 
 // Гарантирует наличие агента: если ключа нет — создаёт и одобряет (popup Rabby).
@@ -86,7 +94,7 @@ function refreshActionButtons() {
   const checked = !!last.acc && !!last.vault && !!last.spot;
 
   $("outHlp").disabled = !(
-    connected && checked && last.vault?.equity > 0 && isUnlocked()
+    connected && checked && last.vault?.equity > DUST_USD && isUnlocked()
   );
   $("outArb").disabled = !(
     connected && checked && maxBridge() > DEDUCT_FEE_USD
@@ -189,7 +197,7 @@ $("balance").addEventListener("click", async () => {
 
 // ---------- MAX ----------
 $("maxHlp").addEventListener("click", () => {
-  if (last.vault?.equity != null && last.vault.equity > 0) {
+  if (last.vault?.equity != null && last.vault.equity > DUST_USD) {
     $("hlpAmt").value = last.vault.equity.toFixed(2);
   } else {
     err("MAX: сначала выполните Check Balance");
@@ -197,7 +205,7 @@ $("maxHlp").addEventListener("click", () => {
 });
 $("maxArb").addEventListener("click", () => {
   if (last.acc && last.spot && last.fee != null) {
-    $("arbAmt").value = maxBridge().toFixed(2);
+    $("arbAmt").value = (Math.floor(maxBridge() * 100) / 100).toFixed(2);
   } else {
     err("MAX: сначала выполните Check Balance");
   }
@@ -214,12 +222,13 @@ $("outArb").addEventListener("click", async () => {
   if (amount <= DEDUCT_FEE_USD) {
     return err("Bridge: сумма должна быть больше комиссии " + DEDUCT_FEE_USD + " USDC");
   }
-  const cap = maxBridge();
+  const capRaw = maxBridge();
+  const cap = Math.floor(capRaw * 100) / 100; // тот же floor, что вставляет MAX
   if (amount > cap) {
     return err("Bridge: сумма превышает MAX " + fmt(cap) + " USDC");
   }
   // sent = min(введённая сумма, cap − gas buffer). При ручном вводе ниже потолка буфер не вмешивается.
-  const sent = Math.min(amount, Math.max(cap - GAS_BUFFER_USD, 0));
+  const sent = Math.min(amount, Math.max(capRaw - GAS_BUFFER_USD, 0));
   if (sent <= DEDUCT_FEE_USD) {
     return err("Bridge: сумма после газового буфера меньше комиссии " + DEDUCT_FEE_USD);
   }
@@ -229,7 +238,8 @@ $("outArb").addEventListener("click", async () => {
     log("→ Bridge: введено " + amount.toFixed(2) + ", отправляем " + sent.toFixed(6) + " (буфер газа " + GAS_BUFFER_USD + ") → " + dest.slice(0, 10) + "…");
     log("→ получатель получит ≈ " + (sent - DEDUCT_FEE_USD).toFixed(2) + " USDC");
     const res = await withdrawToArbitrum(gw(), walletCtx.wallet, dest, sent.toFixed(6));
-    log("✓ Bridge response: " + JSON.stringify(res));
+    log("✅ Bridge SUCCESS: средства списаны с Hyperliquid, в Arbitrum придут через ≈5 мин", "ok");
+    await autoRefreshAfterSuccess(3000);
   } catch (e) {
     err("Bridge: " + (e.message || e));
   } finally {
@@ -245,7 +255,7 @@ $("outHlp").addEventListener("click", async () => {
   const amount = parseFloat(amountStr);
   if (!okAddr(vault)) return err("HLP: Vault address — нужен 0x + 40 символов");
   if (!amountStr || isNaN(amount) || amount <= 0) return err("HLP: введите сумму больше 0");
-  if (!last.vault || last.vault.equity <= 0) return err("HLP: нет позиции в волте");
+  if (!last.vault || last.vault.equity <= DUST_USD) return err("HLP: нет позиции в волте");
   if (!isUnlocked()) return err("HLP: вывод заблокирован, дождитесь разблокировки");
 
   // Агент (создастся автоматически при первом клике, если его нет)
@@ -269,7 +279,8 @@ $("outHlp").addEventListener("click", async () => {
   try {
     log("→ HLP withdraw: " + (usdMicro / 1e6).toFixed(6) + " USDC из волта " + vault.slice(0, 10) + "…");
     const res = await withdrawFromVault(gw(), agent, vault, usdMicro);
-    log("✓ HLP response: " + JSON.stringify(res));
+    log("✅ HLP SUCCESS: средства переведены из волта в мастер-аккаунт", "ok");
+    await autoRefreshAfterSuccess(3000);
   } catch (e) {
     // Если агент просрочен/отозван — очищаем ключ, чтобы следующий клик создал нового
     if (/agent/i.test(e.message || "")) {
@@ -365,7 +376,7 @@ function updateLockStatus(acc, vl) {
   const el = $("lockStatus");
   el.className = "status";
 
-  if (!vl.equity) {
+  if (!vl.equity || vl.equity < DUST_USD) {
     el.textContent = "— No HLP position found";
     return;
   }
