@@ -8,7 +8,7 @@ const DEDUCT_FEE_USD = 0.2; // фикс-комиссия вывода, серв�
 const GAS_BUFFER_USD = 0.01; // консервативный буфер под EVM-gas (официальный ~0.0011)
 const DUST_USD = 0.01; // пыль: всё, что меньше цента, считаем нулём (как официальный фронт)
 const AGENT_KEY_LS = "hl_agent_key"; // localStorage-ключ агента
-const VERSION = "1.0.0"; // версия инструмента — менять здесь при каждом релизе
+const VERSION = "1.0.4"; // версия инструмента — менять здесь при каждом релизе
 let last = { acc: null, vault: null, spot: null, fee: null }; // последние полученные данные
 let walletCtx = null; // { address, wallet, provider } — появится после подключения
 
