@@ -1,6 +1,6 @@
 // app.js — связывает интерфейс с логикой. v9: авто-агент + preview действий + vault I/O.
 import { fetchAccount, fetchVault, fetchSpot, fetchTransferFee, withdrawToArbitrum, withdrawFromVault } from "./actions.js";
-import { depositToVault, approveAgent, generateAgentKey, agentAccountFromKey } from "./actions.js"; // depositToVault [TEMP]
+import { approveAgent, generateAgentKey, agentAccountFromKey } from "./actions.js";
 import { connectWallet, onAccountsChanged } from "./wallet.js";
 
 const $ = (id) => document.getElementById(id);
@@ -99,9 +99,7 @@ function refreshActionButtons() {
   $("outArb").disabled = !(
     connected && checked && maxBridge() > DEDUCT_FEE_USD
   );
-  // [TEMP] начало
-  $("inHlp").disabled = !(connected && checked && maxBridge() > 0);
-  // [TEMP] конец
+  
 }
 
 // Стартовое состояние: всё сброшено, кнопки вывода серые
@@ -294,82 +292,6 @@ $("outHlp").addEventListener("click", async () => {
     refreshActionButtons();
   }
 });
-
-// [TEMP] ===== начало: тестовый депозит =====
-$("inHlp").addEventListener("click", async () => {
-  if (!walletCtx) return err("HLP deposit: сначала подключите кошелёк");
-  const vault = $("vaultAddr").value.trim();
-  const amountStr = $("hlpAmt").value.trim();
-  const amount = parseFloat(amountStr);
-  if (!okAddr(vault)) return err("HLP deposit: Vault address — нужен 0x + 40 символов");
-  if (!amountStr || isNaN(amount) || amount <= 0) return err("HLP deposit: введите сумму больше 0");
-  
-  // Агент (создастся автоматически при первом клике, если его нет)
-  let agent;
-  try {
-    agent = await ensureAgent();
-  } catch (e) {
-    return err("Agent: " + (e.message || e));
-  }
-
-  const usdMicro = Math.round(amount * 1e6);
-  const action = { vaultAddress: vault, isDeposit: true, usd: usdMicro };
-  const json = JSON.stringify(action, null, 2);
-  console.log("[vaultTransfer action]\n" + json);
-  if (!window.confirm("ВЫВЕРКА ДЕЙСТВИЯ (depositToVault):\n\n" + json + "\n\nOK — отправить | Отмена — отклонить")) {
-    return log("⚠ Отменено в окне выверки");
-  }
-
-  $("inHlp").disabled = true;
-  try {
-    log("→ HLP deposit: " + amount.toFixed(2) + " USDC в волт " + vault.slice(0, 10) + "… (лок 4 дня)");
-    const res = await depositToVault(gw(), agent, vault, usdMicro);
-    log("✓ HLP deposit response: " + JSON.stringify(res));
-  } catch (e) {
-    if (/agent/i.test(e.message || "")) {
-      localStorage.removeItem(AGENT_KEY_LS);
-      refreshAgentStatus();
-      err("HLP deposit: агент истёк/отозван — нажмите кнопку ещё раз, создастся новый");
-    } else {
-      err("HLP deposit: " + (e.message || e));
-    }
-  } finally {
-    refreshActionButtons();
-  }
-});
-
-// DEV-хук: негативный тест вывода во время лока. В консоли: hlTestVault(1)
-window.hlTestVault = async (usd) => {
-  if (!walletCtx) return err("hlTestVault: нет кошелька");
-  const vault = $("vaultAddr").value.trim();
-  let agent;
-  try {
-    agent = await ensureAgent();
-  } catch (e) {
-    return err("Agent: " + (e.message || e));
-  }
-  const usdMicro = Math.round(usd * 1e6);
-  const action = { vaultAddress: vault, isDeposit: false, usd: usdMicro };
-  const json = JSON.stringify(action, null, 2);
-  console.log("[hlTestVault action]\n" + json);
-  if (!window.confirm("ВЫВЕРКА hlTestVault:\n\n" + json + "\n\nOK — отправить | Отмена — отклонить")) {
-    return log("⚠ Отменено в окне выверки");
-  }
-  try {
-    log("→ hlTestVault: " + usd + " USDC, vault " + vault.slice(0, 10) + "…");
-    const res = await withdrawFromVault(gw(), agent, vault, usdMicro);
-    log("✓ hlTestVault response: " + JSON.stringify(res));
-  } catch (e) {
-    if (/agent/i.test(e.message || "")) {
-      localStorage.removeItem(AGENT_KEY_LS);
-      refreshAgentStatus();
-      err("hlTestVault: агент истёк/отозван — кликните ещё раз");
-    } else {
-      err("hlTestVault: " + (e.message || e));
-    }
-  }
-};
-// [TEMP] ===== конец: тестовый депозит =====
 
 // ---------- Строка статуса блокировки (только текст; кнопки решает refreshActionButtons) ----------
 function updateLockStatus(acc, vl) {

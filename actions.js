@@ -87,18 +87,6 @@ export async function withdrawFromVault(gatewayUrl, wallet, vaultAddress, usdMic
   });
 }
 
-// [TEMP] ===== начало: тестовый депозит (удалить перед релизом) =====
-export async function depositToVault(gatewayUrl, wallet, vaultAddress, usdMicro) {
-  const transport = new HttpTransport({ apiUrl: gatewayUrl });
-  const exchange = new ExchangeClient({ transport, wallet });
-  return await exchange.vaultTransfer({
-    vaultAddress,
-    isDeposit: true,
-    usd: usdMicro,
-  });
-}
-// [TEMP] ===== конец: тестовый депозит =====
-
 // ---------- Агент для L1-действий (vaultTransfer) ----------
 // Ключ генерируется локально, живёт в localStorage.
 // Агент НЕ может выводить средства наружу: мост/withdraw3 — только мастер.
