@@ -88,18 +88,29 @@ function maxBridge() {
   return Math.max(availableBridge() - (last.fee ?? 1), 0);
 }
 
+// Режим просмотра: смотрим чужой адрес — действия запрещены
+function isViewOnly() {
+  if (!walletCtx) return true;
+  const user = $("checkAddr").value.trim().toLowerCase();
+  return !user || user !== walletCtx.address.toLowerCase();
+}
+
 // Единая точка решения об активности кнопок вывода
 function refreshActionButtons() {
   const connected = !!walletCtx;
   const checked = !!last.acc && !!last.vault && !!last.spot;
+  const viewOnly = isViewOnly();
+
+  $("viewOnlyNote").style.display = (connected && checked && viewOnly) ? "" : "none";
 
   $("outHlp").disabled = !(
-    connected && checked && last.vault?.equity > DUST_USD && isUnlocked()
+    connected && checked && !viewOnly && last.vault?.equity > DUST_USD && isUnlocked()
   );
   $("outArb").disabled = !(
-    connected && checked && maxBridge() > DEDUCT_FEE_USD
+    connected && checked && !viewOnly && maxBridge() > DEDUCT_FEE_USD
   );
-  
+  $("maxHlp").disabled = $("outHlp").disabled;
+  $("maxArb").disabled = $("outArb").disabled;
 }
 
 // Стартовое состояние: всё сброшено, кнопки вывода серые
@@ -181,6 +192,7 @@ function refreshDestField() {
 }
 
 $("destUnlock").addEventListener("change", refreshDestField);
+$("checkAddr").addEventListener("input", refreshActionButtons);
 
 // ---------- Проверка баланса ----------
 $("balance").addEventListener("click", async () => {
@@ -237,6 +249,7 @@ $("maxArb").addEventListener("click", () => {
 // ---------- Bridge to Arbitrum ----------
 $("outArb").addEventListener("click", async () => {
   if (!walletCtx) return err("Bridge: сначала подключите кошелёк");
+  if (isViewOnly()) return err("Bridge: viewing external address — connect that wallet to operate");
   const dest = $("arbDest").value.trim();
   const amountStr = $("arbAmt").value.trim();
   const amount = parseFloat(amountStr);
@@ -273,6 +286,7 @@ $("outArb").addEventListener("click", async () => {
 // ---------- Withdraw from HLP ----------
 $("outHlp").addEventListener("click", async () => {
   if (!walletCtx) return err("HLP: сначала подключите кошелёк");
+  if (isViewOnly()) return err("HLP: viewing external address — connect that wallet to operate");
   const vault = $("vaultAddr").value.trim();
   const amountStr = $("hlpAmt").value.trim();
   const amount = parseFloat(amountStr);

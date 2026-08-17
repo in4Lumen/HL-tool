@@ -18,6 +18,9 @@
 
       <label for="vaultAddr">HLP Vault Address</label>
       <input id="vaultAddr" type="text" value="0xdfc24b077bc1425ad1dea75bcb6f8158e10df303">
+
+      <label for="checkAddr">Balance Check Address</label>
+      <input id="checkAddr" type="text" placeholder="0x… after connect — your address (editable)">
     </details>
   </section>
 
@@ -31,15 +34,12 @@
   <!-- Section: Balances -->
   <section class="card">
     <h2>Balances</h2>
-    <label for="checkAddr">Balance Check Address</label>
-    <input id="checkAddr" type="text" placeholder="0x… after connect — your address (editable)">
-
     <button id="balance">🔍 Check Balance</button>
 
     <p id="vaultBal" class="status">Vault (HLP): —</p>
     <p id="lockStatus" class="status">—</p>
     <p id="accBal" class="status">Available Balance: —</p>
-    
+    <p id="viewOnlyNote" class="status warn" style="display:none;">👁 Viewing external address — balances are read-only, actions disabled</p>
   </section>
 
   <!-- Section: Withdraw from HLP -->
