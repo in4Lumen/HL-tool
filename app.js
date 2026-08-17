@@ -118,10 +118,11 @@ $("connect").addEventListener("click", async () => {
     $("who").textContent = "Connected: " + walletCtx.address;
     $("who").classList.add("ok");
     if (!$("checkAddr").value.trim()) $("checkAddr").value = walletCtx.address;
-    if (!$("arbDest").value.trim()) $("arbDest").value = walletCtx.address;
+    if (destLocked() || !$("arbDest").value.trim()) $("arbDest").value = walletCtx.address;
     $("connect").textContent = "✓ Wallet Connected";
     log("✓ Connected: " + walletCtx.address);
     refreshActionButtons();
+    refreshDestField();
   } catch (e) {
     $("connect").disabled = false;
     err("Connect: " + (e.message || e));
@@ -138,6 +139,7 @@ onAccountsChanged(async (accs) => {
     resetBalances();
     refreshActionButtons();
     refreshAgentStatus();
+    refreshDestField();
     log("⚠ Кошелёк отключён в браузере");
   } else {
     const old = walletCtx?.address;
@@ -148,14 +150,37 @@ onAccountsChanged(async (accs) => {
       $("who").textContent = "Connected: " + walletCtx.address;
       $("who").classList.add("ok");
       if (old && $("checkAddr").value.trim().toLowerCase() === old) $("checkAddr").value = walletCtx.address;
-      if (old && $("arbDest").value.trim().toLowerCase() === old)  $("arbDest").value = walletCtx.address;
+      if (destLocked()) $("arbDest").value = walletCtx.address;
     } catch (e) {
       err("Reconnect: " + (e.message || e));
     }
     refreshActionButtons();
     refreshAgentStatus();
+    refreshDestField();
   }
 });
+
+// Единая точка истины: поле активно только при включённой галке И подключённом кошельке
+function destLocked() {
+  return !($("destUnlock").checked && !!walletCtx);
+}
+
+function refreshDestField() {
+  const locked = destLocked();
+  $("arbDest").disabled = locked;
+  if (locked && walletCtx) {
+    $("arbDest").value = walletCtx.address;
+    $("arbDest").placeholder = "0x… after connect — your address (editable)";
+  }
+  if (locked && !walletCtx) {
+    $("arbDest").value = "";
+    $("arbDest").placeholder = "0x… connect wallet first";
+  } else if (!locked) {
+    $("arbDest").placeholder = "0x… (editing unlocked)";
+  }
+}
+
+$("destUnlock").addEventListener("change", refreshDestField);
 
 // ---------- Проверка баланса ----------
 $("balance").addEventListener("click", async () => {

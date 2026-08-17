@@ -85,3 +85,21 @@ button.max {
 }
 button.max:active { transform: translateY(-50%); }
 .hint { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
+/* Чекбокс «Send to a different address»: сбрасываем стили текстового поля */
+input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  accent-color: #4ecdc4;      /* цвет галки в тон темы */
+  flex: 0 0 auto;             /* не растягиваться во flex-ряду */
+  cursor: pointer;
+}
+input[type="checkbox"]:focus {
+  outline: 2px solid rgba(78, 205, 196, 0.5);
+  outline-offset: 2px;
+}

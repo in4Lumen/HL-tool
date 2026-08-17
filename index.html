@@ -59,7 +59,11 @@
   <section class="card">
     <h2>Withdraw from Hyperliquid</h2>
     <label for="arbDest">Destination Address (Arbitrum)</label>
-    <input id="arbDest" type="text" placeholder="0x… after connect — your address (editable)">
+    <input id="arbDest" type="text" placeholder="0x… connect wallet first" disabled>
+    <label class="hint" style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+      <input id="destUnlock" type="checkbox">
+      Send to a different address (advanced — only if you are sure)
+    </label>
 
     <label for="arbAmt">Amount (USDC)</label>
     <div class="amt-wrap">
